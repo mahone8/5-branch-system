@@ -1,0 +1,166 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql" // Neon-compatible: swap DATABASE_URL to your Neon connection string
+  url      = env("DATABASE_URL")
+}
+
+model Branch {
+  id        String    @id @default(cuid())
+  code      String    @unique // GV1..GV5
+  name      String
+  city      String?
+  phone     String?
+  rooms     Room[]
+  students  Student[]
+  users     User[]
+  notices   Notice[]
+  payments  Payment[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model User {
+  id           String     @id @default(cuid())
+  username     String     @unique
+  passwordHash String
+  role         String // ADMIN | WARDEN | RESIDENT
+  name         String?
+  active       Boolean    @default(true)
+  branchId     String? // staff accounts: branch they manage (null for super admin)
+  branch       Branch?    @relation(fields: [branchId], references: [id])
+  residentId   String?    @unique // resident accounts: linked student
+  resident     Student?   @relation(fields: [residentId], references: [id], onDelete: Cascade)
+  sessions     Session[]
+  messMenus    MessMenu[]
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model Student {
+  id            String      @id @default(cuid())
+  studentId     String      @unique // auto-generated per branch, e.g. NZL-0007
+  name          String
+  email         String?
+  phone         String
+  gender        String
+  cnic          String? // Pakistani national ID, e.g. 35202-1234567-1
+  university    String? // e.g. COMSATS University Islamabad
+  course        String?
+  department    String?
+  guardianName  String?
+  guardianPhone String?
+  address       String?
+  status        String      @default("ACTIVE") // ACTIVE | CHECKED_OUT
+  checkInDate   DateTime    @default(now())
+  checkOutDate  DateTime?
+  branchId      String
+  branch        Branch      @relation(fields: [branchId], references: [id])
+  roomId        String?
+  room          Room?       @relation(fields: [roomId], references: [id])
+  bedNumber     Int? // bed within the room: 1..capacity ("Bed 1", "Bed 2", ...)
+  payments      Payment[]
+  complaints    Complaint[]
+  visitors      Visitor[]
+  user          User?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@unique([roomId, bedNumber]) // a bed can hold only one active allocation
+}
+
+model Room {
+  id         String    @id @default(cuid())
+  roomNumber String    @unique // prefixed with branch code, e.g. NZL-101
+  block      String
+  floor      Int
+  type       String // SINGLE (1-seater) | DOUBLE (2-seater) | TRIPLE (3-seater)
+  capacity   Int
+  occupied   Int       @default(0)
+  status     String    @default("AVAILABLE") // AVAILABLE | FULL | MAINTENANCE
+  monthlyFee Float
+  branchId   String
+  branch     Branch    @relation(fields: [branchId], references: [id])
+  students   Student[]
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+model Payment {
+  id        String    @id @default(cuid())
+  studentId String
+  student   Student   @relation(fields: [studentId], references: [id])
+  branchId  String // denormalized for per-branch earnings
+  branch    Branch    @relation(fields: [branchId], references: [id])
+  amount    Float
+  month     String // e.g. "2026-09"
+  status    String    @default("PENDING") // PENDING | PAID | OVERDUE
+  method    String? // CASH | UPI | BANK_TRANSFER
+  paidAt    DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@unique([studentId, month])
+}
+
+model Complaint {
+  id          String   @id @default(cuid())
+  studentId   String
+  student     Student  @relation(fields: [studentId], references: [id])
+  title       String
+  description String
+  category    String // ELECTRICAL | PLUMBING | CLEANLINESS | FURNITURE | INTERNET | OTHER
+  status      String   @default("OPEN") // OPEN | IN_PROGRESS | RESOLVED
+  priority    String   @default("MEDIUM") // LOW | MEDIUM | HIGH
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Visitor {
+  id        String    @id @default(cuid())
+  name      String
+  phone     String?
+  studentId String
+  student   Student   @relation(fields: [studentId], references: [id])
+  purpose   String?
+  checkIn   DateTime  @default(now())
+  checkOut  DateTime?
+}
+
+model Notice {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  priority  String   @default("NORMAL") // NORMAL | IMPORTANT | URGENT
+  branchId  String
+  branch    Branch   @relation(fields: [branchId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+// Mess menu — COMMON for all hostel branches (not branch-scoped).
+// Staff upload the menu file (image / PDF / text) from their local machine;
+// every branch's residents see the same latest menu.
+model MessMenu {
+  id         String   @id @default(cuid())
+  title      String
+  note       String?
+  fileName   String
+  mimeType   String
+  size       Int // bytes
+  data       String // base64-encoded file content
+  active     Boolean  @default(true) // latest upload is active, older ones archived
+  uploadedBy String
+  uploader   User     @relation(fields: [uploadedBy], references: [id])
+  createdAt  DateTime @default(now())
+}
