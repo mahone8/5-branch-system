@@ -68,7 +68,9 @@ export async function POST(req: NextRequest) {
         category: category || "OTHER",
         priority: priority || "MEDIUM",
       },
-      include: { student: { select: { studentId: true, name: true } } },
+      include: {
+        student: { select: { studentId: true, name: true, roomId: true, room: { select: { roomNumber: true } } } },
+      },
     });
 
     return NextResponse.json(complaint, { status: 201 });

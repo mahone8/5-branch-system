@@ -1,8 +1,12 @@
 'use client'
 
 import { ReactNode } from 'react'
+import { MessageCircle } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { complaintWhatsAppUrl } from '@/lib/types'
+import type { Complaint } from '@/lib/types'
 
 type BadgeVariant = 'default' | 'secondary' | 'destructive' | 'outline' | null
 
@@ -72,5 +76,32 @@ export function EmptyState({
       )}
       {action && <div className="mt-3">{action}</div>}
     </div>
+  )
+}
+
+// Opens WhatsApp with the complaint pre-filled; the sender picks the chat.
+export function WhatsAppShareButton({
+  complaint,
+  label = 'Send via WhatsApp',
+  className,
+}: {
+  complaint: Complaint
+  label?: string
+  className?: string
+}) {
+  return (
+    <Button
+      type="button"
+      size="sm"
+      variant="outline"
+      className={cn(
+        'h-9 border-emerald-600/40 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-700 dark:text-emerald-400 dark:hover:bg-emerald-950/40 dark:hover:text-emerald-400',
+        className
+      )}
+      onClick={() => window.open(complaintWhatsAppUrl(complaint), '_blank', 'noopener')}
+    >
+      <MessageCircle className="mr-1.5 h-3.5 w-3.5" />
+      {label}
+    </Button>
   )
 }

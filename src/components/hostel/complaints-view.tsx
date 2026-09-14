@@ -29,11 +29,12 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
+import { ToastAction } from '@/components/ui/toast'
 import { toast } from '@/hooks/use-toast'
 import { apiFetch, useApiMutation, getActiveBranchId } from './api-helpers'
-import { StatusBadge, PriorityBadge, EmptyState } from './shared'
+import { StatusBadge, PriorityBadge, EmptyState, WhatsAppShareButton } from './shared'
 import type { Complaint, Student } from '@/lib/types'
-import { formatDateTime, CATEGORIES } from '@/lib/types'
+import { formatDateTime, CATEGORIES, complaintWhatsAppUrl } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
 const CATEGORY_ICONS: Record<string, string> = {
@@ -126,11 +127,22 @@ export default function ComplaintsView() {
     }
     setSaving(true)
     try {
-      await apiFetch('/api/complaints', {
+      const created = await apiFetch<Complaint>('/api/complaints', {
         method: 'POST',
         body: JSON.stringify(form),
       })
-      toast({ title: 'Complaint filed', description: 'The maintenance team has been notified.' })
+      toast({
+        title: 'Complaint filed',
+        description: 'The maintenance team has been notified.',
+        action: (
+          <ToastAction
+            altText="Send complaint via WhatsApp"
+            onClick={() => window.open(complaintWhatsAppUrl(created), '_blank', 'noopener')}
+          >
+            Send via WhatsApp
+          </ToastAction>
+        ),
+      })
       setDialogOpen(false)
       setForm({ studentId: '', title: '', description: '', category: 'ELECTRICAL', priority: 'MEDIUM' })
     } catch (e) {
@@ -253,6 +265,7 @@ export default function ComplaintsView() {
                           Mark {next === 'IN_PROGRESS' ? 'In Progress' : next === 'RESOLVED' ? 'Resolved' : 'Reopen'}
                         </Button>
                       ))}
+                      <WhatsAppShareButton complaint={c} />
                       <Button
                         size="sm"
                         variant="ghost"

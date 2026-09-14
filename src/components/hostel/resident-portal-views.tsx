@@ -42,10 +42,17 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { toast } from '@/hooks/use-toast'
+import { ToastAction } from '@/components/ui/toast'
 import type { Payment, Complaint, Notice } from '@/lib/types'
-import { formatCurrency, formatDate, monthLabel, CATEGORIES } from '@/lib/types'
+import {
+  formatCurrency,
+  formatDate,
+  monthLabel,
+  CATEGORIES,
+  complaintWhatsAppUrl,
+} from '@/lib/types'
 import { apiFetch, useApiMutation } from './api-helpers'
-import { StatusBadge, PriorityBadge, EmptyState } from './shared'
+import { StatusBadge, PriorityBadge, EmptyState, WhatsAppShareButton } from './shared'
 
 // ---------------------------------------------------------------- payments
 
@@ -152,12 +159,23 @@ export function ResidentComplaintsView() {
     }
     setSubmitting(true)
     try {
-      await apiFetch('/api/complaints', {
+      const created = await apiFetch<Complaint>('/api/complaints', {
         method: 'POST',
         body: JSON.stringify({ title: title.trim(), description: description.trim(), category }),
       })
       await queryClient.invalidateQueries({ queryKey: ['myComplaints'] })
-      toast({ title: 'Request submitted', description: 'The hostel office has been notified.' })
+      toast({
+        title: 'Request submitted',
+        description: 'The hostel office has been notified.',
+        action: (
+          <ToastAction
+            altText="Send complaint via WhatsApp"
+            onClick={() => window.open(complaintWhatsAppUrl(created), '_blank', 'noopener')}
+          >
+            Send via WhatsApp
+          </ToastAction>
+        ),
+      })
       setDialogOpen(false)
       setTitle('')
       setDescription('')
@@ -210,6 +228,9 @@ export function ResidentComplaintsView() {
                 </div>
               </div>
               <p className="mt-2 text-sm text-muted-foreground">{c.description}</p>
+              <div className="mt-3 flex justify-end">
+                <WhatsAppShareButton complaint={c} label="Forward via WhatsApp" />
+              </div>
             </li>
           ))}
         </ul>

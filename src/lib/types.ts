@@ -106,7 +106,12 @@ export interface Complaint {
   priority: string;
   createdAt: string;
   updatedAt: string;
-  student: { studentId: string; name: string; roomId: string | null };
+  student: {
+    studentId: string;
+    name: string;
+    roomId: string | null;
+    room?: { roomNumber: string } | null;
+  };
 }
 
 export interface Visitor {
@@ -271,4 +276,38 @@ export function formatDateTime(iso: string | null): string {
 export function currentMonth(): string {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function titleCase(value: string): string {
+  return value.charAt(0) + value.slice(1).toLowerCase().replace(/_/g, " ");
+}
+
+// WhatsApp click-to-send share URL. Without a phone number, wa.me opens the
+// WhatsApp contact picker with the message pre-filled, so the sender chooses
+// which chat (warden, maintenance, group) to forward the complaint to.
+export function complaintWhatsAppText(complaint: Complaint): string {
+  const room = complaint.student.room?.roomNumber;
+  const category =
+    CATEGORIES.find((c) => c.value === complaint.category)?.label ?? complaint.category;
+  const lines = [
+    "🏠 *Hostel Complaint*",
+    "",
+    `*Title:* ${complaint.title}`,
+    `*Student:* ${complaint.student.name} (${complaint.student.studentId})`,
+  ];
+  if (room) lines.push(`*Room:* ${room}`);
+  lines.push(
+    `*Category:* ${category}`,
+    `*Priority:* ${titleCase(complaint.priority)}`,
+    `*Status:* ${titleCase(complaint.status)}`,
+    `*Filed:* ${formatDateTime(complaint.createdAt)}`,
+    "",
+    "*Description:*",
+    complaint.description,
+  );
+  return lines.join("\n");
+}
+
+export function complaintWhatsAppUrl(complaint: Complaint): string {
+  return `https://wa.me/?text=${encodeURIComponent(complaintWhatsAppText(complaint))}`;
 }
