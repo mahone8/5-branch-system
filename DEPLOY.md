@@ -47,7 +47,7 @@ Vercel is built by the Next.js team, so this stack is zero-config there.
 
    | Name | Value |
    |---|---|
-   | `DATABASE_URL` | your Neon connection string (same one as in `.env`) |
+   | `DATABASE_URL` | your Postgres connection string (Neon / Nhost / etc. — same one as in `.env`) |
 
 5. Click **Deploy** — the first build takes ~2–3 minutes.
 6. You get a live URL like `https://hostel-management.vercel.app`. Log in with

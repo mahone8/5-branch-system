@@ -76,6 +76,28 @@ Neon (all 6 tables are created automatically).
 No code changes are required: Neon is standard PostgreSQL, so Prisma, the API
 routes and the UI all work identically.
 
+## Migrating between databases (e.g. Neon → Nhost)
+
+`scripts/migrate-db.mjs` copies **all data** (branches, users, sessions,
+students, rooms, payments, complaints, visitors, notices, mess menus,
+expenses) from one Postgres database to another, preserving every ID, and
+verifies row counts when done:
+
+```bash
+SOURCE_DATABASE_URL="postgres://…old…" \
+TARGET_DATABASE_URL="postgres://…new…" \
+node scripts/migrate-db.mjs
+```
+
+- It applies the Prisma schema to the target first, so the target can be empty.
+- It refuses to run if the target already has data (re-run with `CLEAN=1` to
+  wipe the target and start fresh, e.g. after a failed half-run).
+- Prefer the **direct** connection (port 5432) while migrating. For serverless
+  hosts (Vercel), put the **pooled** endpoint in `DATABASE_URL` instead — if it
+  goes through PgBouncer (port 6543), also append `&pgbouncer=true`.
+- After migrating: update `DATABASE_URL` in Vercel → Settings → Environment
+  Variables, redeploy, verify the app, and only then delete the old database.
+
 ## Notes
 
 - The sandbox runner injects a default `DATABASE_URL` (sqlite) into every shell.
