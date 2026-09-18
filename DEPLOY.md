@@ -56,6 +56,7 @@ Vercel is built by the Next.js team, so this stack is zero-config there.
 **Custom domain for the client:** Project → **Settings → Domains** → add e.g.
 `manage.yourclient.com`, then follow the DNS instructions (one A / CNAME record
 at the domain registrar). The HTTPS certificate is issued automatically.
+Production currently runs at **https://nhms.nazzal.pk**.
 
 > **Vercel caveat:** serverless functions accept request bodies up to ~4.5 MB.
 > Mess-menu uploads are capped at 5 MB by the app itself — on Vercel keep menu
