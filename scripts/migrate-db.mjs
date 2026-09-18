@@ -56,14 +56,27 @@ if (SOURCE === TARGET) {
   process.exit(1)
 }
 
+// Nhost's public endpoint runs through PgBouncer (typically port 6543).
+// Prisma must be told about it, or prepared statements break with
+// "prepared statement does not exist" errors.
+function withPgbouncerFlag(url) {
+  if (/:6543[/?]/.test(url) && !url.includes('pgbouncer=true')) {
+    return url + (url.includes('?') ? '&' : '?') + 'pgbouncer=true'
+  }
+  return url
+}
+
+const SOURCE_URL = withPgbouncerFlag(SOURCE)
+const TARGET_URL = withPgbouncerFlag(TARGET)
+
 console.log('[1/3] Applying Prisma schema to the target database…')
 execSync('npx prisma db push --skip-generate', {
   stdio: 'inherit',
-  env: { ...process.env, DATABASE_URL: TARGET },
+  env: { ...process.env, DATABASE_URL: TARGET_URL },
 })
 
-const source = new PrismaClient({ datasources: { db: { url: SOURCE } } })
-const target = new PrismaClient({ datasources: { db: { url: TARGET } } })
+const source = new PrismaClient({ datasources: { db: { url: SOURCE_URL } } })
+const target = new PrismaClient({ datasources: { db: { url: TARGET_URL } } })
 
 async function main() {
   // Optional clean slate (e.g. after a failed half-run)
