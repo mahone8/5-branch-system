@@ -11,6 +11,7 @@ import {
   MessageSquareWarning,
   Plus,
   Megaphone,
+  ReceiptText,
 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -53,6 +54,7 @@ import {
 } from '@/lib/types'
 import { apiFetch, useApiMutation } from './api-helpers'
 import { StatusBadge, PriorityBadge, EmptyState, WhatsAppShareButton } from './shared'
+import { openPaymentReceipt } from './receipt'
 
 // ---------------------------------------------------------------- payments
 
@@ -109,6 +111,7 @@ export function ResidentPaymentsView() {
               <TableHead>Status</TableHead>
               <TableHead className="hidden sm:table-cell">Method</TableHead>
               <TableHead className="hidden sm:table-cell">Paid on</TableHead>
+              <TableHead className="text-right">Receipt</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -124,6 +127,26 @@ export function ResidentPaymentsView() {
                 </TableCell>
                 <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">
                   {formatDate(p.paidAt)}
+                </TableCell>
+                <TableCell className="text-right">
+                  {p.status === 'PAID' ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-9"
+                      onClick={() => {
+                        try {
+                          openPaymentReceipt(p)
+                        } catch (e) {
+                          toast({ title: 'Could not open receipt', description: (e as Error).message, variant: 'destructive' })
+                        }
+                      }}
+                    >
+                      <ReceiptText className="mr-1.5 h-3.5 w-3.5" /> Receipt
+                    </Button>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">—</span>
+                  )}
                 </TableCell>
               </TableRow>
             ))}

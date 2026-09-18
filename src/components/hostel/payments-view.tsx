@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   FileSpreadsheet,
   Wallet,
+  ReceiptText,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -41,6 +42,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from '@/hooks/use-toast'
 import { apiFetch, useApiMutation, getActiveBranchId } from './api-helpers'
 import { StatusBadge, EmptyState } from './shared'
+import { openPaymentReceipt } from './receipt'
 import type { Payment, Student } from '@/lib/types'
 import { formatCurrency, monthLabel, formatDate, currentMonth, MONTH_LABELS } from '@/lib/types'
 
@@ -331,7 +333,20 @@ export default function PaymentsView() {
                         <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" /> Mark Paid
                       </Button>
                     ) : (
-                      <span className="text-xs text-muted-foreground">—</span>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-9"
+                        onClick={() => {
+                          try {
+                            openPaymentReceipt(p)
+                          } catch (e) {
+                            toast({ title: 'Could not open receipt', description: (e as Error).message, variant: 'destructive' })
+                          }
+                        }}
+                      >
+                        <ReceiptText className="mr-1.5 h-3.5 w-3.5" /> Receipt
+                      </Button>
                     )}
                   </TableCell>
                 </TableRow>

@@ -18,6 +18,7 @@ model Branch {
   users     User[]
   notices   Notice[]
   payments  Payment[]
+  expenses  Expense[]
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 }
@@ -35,6 +36,7 @@ model User {
   resident     Student?   @relation(fields: [residentId], references: [id], onDelete: Cascade)
   sessions     Session[]
   messMenus    MessMenu[]
+  expenses     Expense[]
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 }
@@ -163,4 +165,24 @@ model MessMenu {
   uploadedBy String
   uploader   User     @relation(fields: [uploadedBy], references: [id])
   createdAt  DateTime @default(now())
+}
+
+// Branch expenses — money spent running a branch (bills, salaries, repairs…).
+// Recorded by staff; listed per branch and per month in the Expenses screen.
+model Expense {
+  id         String   @id @default(cuid())
+  branchId   String
+  branch     Branch   @relation(fields: [branchId], references: [id])
+  title      String
+  category   String   @default("OTHER") // ELECTRICITY | WATER | GAS | INTERNET | SALARY | MAINTENANCE | GROCERY | RENT | OTHER
+  amount     Float
+  paidTo     String? // vendor or person the money was paid to
+  note       String?
+  spentAt    DateTime @default(now()) // date the expense was incurred
+  recordedBy String
+  recorder   User     @relation(fields: [recordedBy], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([branchId, spentAt])
 }

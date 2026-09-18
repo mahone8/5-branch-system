@@ -7,6 +7,7 @@ import {
   Users,
   BedDouble,
   ReceiptText,
+  TrendingDown,
   MessageSquareWarning,
   DoorOpen,
   Megaphone,
@@ -58,6 +59,7 @@ import DashboardView from '@/components/hostel/dashboard-view'
 import StudentsView from '@/components/hostel/students-view'
 import RoomsView from '@/components/hostel/rooms-view'
 import PaymentsView from '@/components/hostel/payments-view'
+import ExpensesView from '@/components/hostel/expenses-view'
 import ComplaintsView from '@/components/hostel/complaints-view'
 import VisitorsView from '@/components/hostel/visitors-view'
 import NoticesView from '@/components/hostel/notices-view'
@@ -74,6 +76,7 @@ export type Section =
   | 'students'
   | 'rooms'
   | 'payments'
+  | 'expenses'
   | 'complaints'
   | 'visitors'
   | 'notices'
@@ -94,6 +97,7 @@ const STAFF_NAV: NavItem[] = [
   { key: 'students', label: 'Residents', icon: Users, subtitle: 'Check-ins, allocation and check-outs' },
   { key: 'rooms', label: 'Rooms', icon: BedDouble, subtitle: '1/2/3-seater rooms, beds and occupancy' },
   { key: 'payments', label: 'Fees & Payments', icon: ReceiptText, subtitle: 'Monthly rent collection and dues' },
+  { key: 'expenses', label: 'Branch Expenses', icon: TrendingDown, subtitle: "This month's spending for the branch" },
   { key: 'complaints', label: 'Complaints', icon: MessageSquareWarning, subtitle: 'Maintenance requests from residents' },
   { key: 'visitors', label: 'Visitor Logs', icon: DoorOpen, subtitle: 'Track guests entering the hostel' },
   { key: 'notices', label: 'Notices', icon: Megaphone, subtitle: 'Announcements for this branch' },
@@ -481,6 +485,7 @@ export default function Home() {
                 {section === 'students' && <StudentsView />}
                 {section === 'rooms' && <RoomsView />}
                 {section === 'payments' && <PaymentsView />}
+                {section === 'expenses' && <ExpensesView />}
                 {section === 'complaints' && <ComplaintsView />}
                 {section === 'visitors' && <VisitorsView />}
                 {section === 'notices' && <NoticesView />}

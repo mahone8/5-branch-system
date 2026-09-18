@@ -88,12 +88,28 @@ export interface Payment {
   paidAt: string | null;
   createdAt: string;
   student: {
-    id: string;
+    id?: string;
     studentId: string;
     name: string;
     roomId: string | null;
-    room: { roomNumber: string; block: string } | null;
+    room: { roomNumber: string; block?: string } | null;
+    branch?: { code: string; name: string } | null;
   };
+}
+
+export interface Expense {
+  id: string;
+  branchId: string;
+  title: string;
+  category: string;
+  amount: number;
+  paidTo: string | null;
+  note: string | null;
+  spentAt: string;
+  recordedBy: string;
+  recorder?: { name: string | null; username: string } | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Complaint {
@@ -226,6 +242,30 @@ export const CATEGORIES = [
   { value: "OTHER", label: "Other" },
 ] as const;
 
+export const EXPENSE_CATEGORIES = [
+  { value: "ELECTRICITY", label: "Electricity", icon: "⚡" },
+  { value: "WATER", label: "Water", icon: "🚰" },
+  { value: "GAS", label: "Gas", icon: "🔥" },
+  { value: "INTERNET", label: "Internet", icon: "📶" },
+  { value: "SALARY", label: "Staff Salary", icon: "👥" },
+  { value: "MAINTENANCE", label: "Maintenance", icon: "🔧" },
+  { value: "GROCERY", label: "Grocery / Mess", icon: "🛒" },
+  { value: "RENT", label: "Building Rent", icon: "🏠" },
+  { value: "OTHER", label: "Other", icon: "📋" },
+] as const;
+
+export function expenseCategoryLabel(category: string): string {
+  return (
+    EXPENSE_CATEGORIES.find((c) => c.value === category)?.label ?? category
+  );
+}
+
+export function expenseCategoryIcon(category: string): string {
+  return (
+    EXPENSE_CATEGORIES.find((c) => c.value === category)?.icon ?? "📋"
+  );
+}
+
 export const MONTH_LABELS: Record<string, string> = {
   "01": "Jan",
   "02": "Feb",
@@ -252,6 +292,38 @@ export function formatCurrency(amount: number): string {
     currency: "PKR",
     maximumFractionDigits: 0,
   }).format(amount);
+}
+
+// Amount in words for receipts, Indian numbering (lakh/crore), e.g.
+// 12500 -> "Rupees Twelve Thousand Five Hundred Only"
+export function amountToWords(amount: number): string {
+  const n = Math.floor(Math.abs(amount));
+  if (n === 0) return "Zero Rupees Only";
+
+  const ones = [
+    "", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine",
+    "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen",
+    "Seventeen", "Eighteen", "Nineteen",
+  ];
+  const tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+
+  const twoDigits = (x: number): string =>
+    x < 20 ? ones[x] : `${tens[Math.floor(x / 10)]}${x % 10 ? " " + ones[x % 10] : ""}`;
+  const threeDigits = (x: number): string =>
+    (x >= 100 ? `${ones[Math.floor(x / 100)]} Hundred${x % 100 ? " " : ""}` : "") +
+    (x % 100 ? twoDigits(x % 100) : "");
+
+  const crore = Math.floor(n / 10000000);
+  const lakh = Math.floor((n % 10000000) / 100000);
+  const thousand = Math.floor((n % 100000) / 1000);
+  const rest = n % 1000;
+
+  const parts: string[] = [];
+  if (crore) parts.push(`${threeDigits(crore)} Crore`);
+  if (lakh) parts.push(`${twoDigits(lakh)} Lakh`);
+  if (thousand) parts.push(`${twoDigits(thousand)} Thousand`);
+  if (rest) parts.push(threeDigits(rest));
+  return `Rupees ${parts.join(" ")} Only`;
 }
 
 export function formatDate(iso: string | null): string {
